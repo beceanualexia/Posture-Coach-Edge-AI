@@ -1,4 +1,7 @@
 # Posture Coach — Wearable Edge-AI Posture Monitor
+<p align="center">
+  <img src="images/project%20photo%201.jpeg" width="60%" alt="Imagine Proiect">
+</p>
 
 Posture Coach is a self-contained wearable that performs real-time head-posture
 classification using a neural network deployed directly on an ESP32
