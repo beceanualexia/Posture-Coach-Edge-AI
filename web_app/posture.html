@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Posture Coach</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background: #1a1a1a;
+    color: white;
+    transition: background 0.4s;
+  }
+  #status {
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 1rem;
+  }
+  #sub {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    margin-bottom: 2rem;
+  }
+  button {
+    font-size: 1.2rem;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 10px;
+    background: #4a4ae0;
+    color: white;
+    cursor: pointer;
+  }
+  button:hover { background: #6a6aff; }
+</style>
+</head>
+<body>
+  <div id="status">Not connected</div>
+  <div id="sub">Press the button to connect</div>
+  <button id="connectBtn">Connect</button>
+
+<script>
+  const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+  const CHAR_UUID    = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+  const statusEl = document.getElementById("status");
+  const subEl    = document.getElementById("sub");
+  const btn      = document.getElementById("connectBtn");
+
+  btn.addEventListener("click", async () => {
+    try {
+      subEl.textContent = "Searching for device...";
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [SERVICE_UUID]
+      });
+
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      const characteristic = await service.getCharacteristic(CHAR_UUID);
+
+      await characteristic.startNotifications();
+      characteristic.addEventListener("characteristicvaluechanged", (event) => {
+        const posture = new TextDecoder().decode(event.target.value);
+        updateUI(posture);
+      });
+
+      subEl.textContent = "Connected! Move your head.";
+      btn.style.display = "none";
+
+      device.addEventListener("gattserverdisconnected", () => {
+        statusEl.textContent = "Disconnected";
+        subEl.textContent = "Reload the page to reconnect";
+        document.body.style.background = "#1a1a1a";
+      });
+
+    } catch (err) {
+      subEl.textContent = "Error: " + err.message;
+    }
+  });
+
+  function updateUI(posture) {
+    if (posture === "cap_aplecat") {
+      document.body.style.background = "#b02020";
+      statusEl.textContent = "Slouching!";
+    } else if (posture === "cap_drept") {
+      document.body.style.background = "#1f7a1f";
+      statusEl.textContent = "Good posture";
+    } else if (posture === "dat_din_cap") {
+      document.body.style.background = "#2a2a8a";
+      statusEl.textContent = "Nodding";
+    } else {
+      document.body.style.background = "#1a1a1a";
+      statusEl.textContent = posture;
+    }
+  }
+</script>
+</body>
+</html>
